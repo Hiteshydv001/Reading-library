@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+motor
+pydantic
+python-dotenv
+trafilatura
+requests
+certifi
+lxml
+pymongo[srv]>=4.0
+python-telegram-bot==20.8
+python-jose[cryptography]
+bcrypt
+python-multipart
+gunicorn
+uvicorn[standard]
