@@ -1,120 +1,104 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import type { LinksResponse, Stats } from "@/types";
 
-// Helper to get auth headers
-const getHeaders = () => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-  };
-};
+const API_BASE: string = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8000";
 
-export const api = {
-  // Auth
-  async login(username: string, password: string) {
-    const formData = new FormData();
-    formData.append('username', username);
-    formData.append('password', password);
+function getAuthToken(): string | null {
+  return localStorage.getItem("access_token");
+}
 
-    const response = await fetch(`${API_URL}/api/auth/login`, {
-      method: 'POST',
-      body: formData,
-    });
-    if (!response.ok) throw new Error('Login failed');
-    const data = await response.json();
-    localStorage.setItem('token', data.access_token);
-    return data;
-  },
+export function setAuthToken(token: string): void {
+  localStorage.setItem("access_token", token);
+}
 
-  async register(username: string, password: string) {
-    const response = await fetch(`${API_URL}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-    if (!response.ok) throw new Error('Registration failed');
-    const data = await response.json();
-    localStorage.setItem('token', data.access_token);
-    return data;
-  },
+export function clearAuthToken(): void {
+  localStorage.removeItem("access_token");
+}
 
-  logout() {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
-  },
+function authHeaders(): Record<string, string> {
+  const token = getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
-  // Get all links with filters
-  async getLinks(params?: {
-    skip?: number;
-    limit?: number;
-    is_read?: boolean;
-    is_favorite?: boolean;
-    tag?: string;
-    search?: string;
-  }) {
-    const queryParams = new URLSearchParams();
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value));
-        }
-      });
-    }
-    
-    const url = `${API_URL}/api/links?${queryParams.toString()}`;
-    const response = await fetch(url, { headers: getHeaders() });
-    if (response.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    }
-    if (!response.ok) throw new Error('Failed to fetch links');
-    return response.json();
-  },
+async function handleResponse<T = unknown>(res: Response): Promise<T> {
+  const text = await res.text();
 
-  // Get single link
-  async getLink(id: string) {
-    const response = await fetch(`${API_URL}/api/links/${id}`, { headers: getHeaders() });
-    if (!response.ok) throw new Error('Failed to fetch link');
-    return response.json();
-  },
+  // Try to parse JSON, but fall back to raw text if parsing fails
+  let data: unknown = undefined;
+  try {
+    data = text ? JSON.parse(text) : undefined;
+  } catch (e) {
+    data = text;
+  }
 
-  // Update link
-  async updateLink(id: string, data: {
-    is_read?: boolean;
-    is_favorite?: boolean;
-    tags?: string[];
-    scheduled_at?: string | null;
-  }) {
-    const response = await fetch(`${API_URL}/api/links/${id}`, {
-      method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Failed to update link');
-    return response.json();
-  },
+  if (res.ok) {
+    // Return parsed data or an empty object for 204/empty responses
+    return (data !== undefined ? (data as T) : ({} as T));
+  }
 
-  // Delete link
-  async deleteLink(id: string) {
-    const response = await fetch(`${API_URL}/api/links/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
-    if (!response.ok) throw new Error('Failed to delete link');
-    return response.json();
-  },
+  const msg = (typeof data === 'string' && data.trim()) ? data : res.statusText || "Request failed";
+  const err = new Error(msg) as Error & { status?: number; data?: unknown };
+  err.status = res.status;
+  err.data = data;
+  throw err;
+}
 
-  // Get all tags
-  async getTags() {
-    const response = await fetch(`${API_URL}/api/tags`, { headers: getHeaders() });
-    if (!response.ok) throw new Error('Failed to fetch tags');
-    return response.json();
-  },
+export interface TokenResponse {
+  access_token: string;
+  token_type?: string;
+}
 
-  // Get statistics
-  async getStats() {
-    const response = await fetch(`${API_URL}/api/stats`, { headers: getHeaders() });
-    if (!response.ok) throw new Error('Failed to fetch stats');
-    return response.json();
-  },
-};
+export async function login(username: string, password: string): Promise<TokenResponse> {
+  const body = new URLSearchParams();
+  body.append("username", username);
+  body.append("password", password);
+
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+  });
+
+  const data = await handleResponse<TokenResponse>(res);
+  if (data && data.access_token) {
+    setAuthToken(data.access_token);
+  }
+  return data;
+}
+
+export async function getLinks(params: Record<string, unknown> = {}): Promise<LinksResponse> {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null) qs.set(k, String(v));
+  });
+  const res = await fetch(`${API_BASE}/api/links?${qs.toString()}`, {
+    headers: { ...authHeaders() },
+  });
+  return handleResponse<LinksResponse>(res);
+}
+
+export async function getTags(): Promise<{ tags: string[] }> {
+  const res = await fetch(`${API_BASE}/api/tags`, { headers: { ...authHeaders() } });
+  return handleResponse<{ tags: string[] }>(res);
+}
+
+export async function getStats(): Promise<Stats> {
+  const res = await fetch(`${API_BASE}/api/stats`, { headers: { ...authHeaders() } });
+  return handleResponse<Stats>(res);
+}
+
+export async function updateLink(id: string, data: Record<string, unknown>): Promise<{ status: string; id?: string }> {
+  const res = await fetch(`${API_BASE}/api/links/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<{ status: string; id?: string }>(res);
+}
+
+export async function deleteLink(id: string): Promise<{ status: string; id?: string }> {
+  const res = await fetch(`${API_BASE}/api/links/${id}`, {
+    method: "DELETE",
+    headers: { ...authHeaders() },
+  });
+  return handleResponse<{ status: string; id?: string }>(res);
+}
