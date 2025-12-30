@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import CalendarPage from "./pages/Calendar";
 import NotFound from "./pages/NotFound";
+import AuthGuard from "@/components/AuthGuard";
 
 const queryClient = new QueryClient();
 
@@ -19,9 +20,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
             <Route path="/login" element={<Login />} />
-            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/calendar" element={<AuthGuard><CalendarPage /></AuthGuard>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
