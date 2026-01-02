@@ -46,6 +46,8 @@ async def check_scheduled_readings():
             "is_read": False
         }).to_list(length=100)
         
+        logger.info(f"⏰ Checking {len(scheduled_links)} scheduled readings at {now.strftime('%H:%M:%S UTC')}")
+        
         if not scheduled_links:
             return
         
@@ -120,15 +122,17 @@ async def check_scheduled_readings():
 
 async def notification_loop():
     """Background loop that checks for scheduled readings every minute"""
-    logger.info("Starting notification scheduler...")
+    logger.info("🔔 Notification loop started - will check every 60 seconds")
     
     while True:
         try:
+            logger.info("🔍 Checking for scheduled readings...")
             await check_scheduled_readings()
+            logger.info("✅ Check complete, sleeping for 60 seconds")
             # Wait 1 minute before checking again
             await asyncio.sleep(60)
         except Exception as e:
-            logger.error(f"Error in notification loop: {e}")
+            logger.error(f"❌ Error in notification loop: {e}")
             await asyncio.sleep(60)
 
 

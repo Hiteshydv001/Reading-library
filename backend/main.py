@@ -133,8 +133,15 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Database connection issue: {e}")
         logger.warning("App started but MongoDB may not be available")
+        notification_task = None
     
     yield  # Application runs here
+    
+    # Cleanup on shutdown
+    logger.info("Shutting down application...")
+    if notification_task:
+        notification_task.cancel()
+        logger.info("Notification scheduler cancelled")
     
     logger.info("Shutting down application...")
     try:
