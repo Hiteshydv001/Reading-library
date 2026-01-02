@@ -59,8 +59,11 @@ export const RetroLinkCard = ({
   };
 
   const handleSchedule = () => {
-    // Convert local datetime-local format to UTC ISO string
+    // Convert IST (local) datetime to UTC ISO string for server
+    // datetime-local gives us: "2026-01-03T01:30" which browser treats as local time
+    // new Date() converts it to UTC automatically based on browser timezone
     const utcDateTime = scheduleDate ? new Date(scheduleDate).toISOString() : null;
+    console.log(`🕐 Scheduling: IST Time: ${scheduleDate} → UTC Time: ${utcDateTime}`);
     onSchedule(link.id, utcDateTime);
     setShowScheduleModal(false);
   };
@@ -393,7 +396,7 @@ export const RetroLinkCard = ({
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Reading Date & Time (Your Local Time)
+                  📍 Pick Your Reading Time (IST - India Time)
                 </label>
                 <input
                   type="datetime-local"
@@ -402,9 +405,17 @@ export const RetroLinkCard = ({
                   className="w-full px-4 py-2.5 bg-background border-2 border-input rounded-lg text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
                 />
                 {scheduleDate && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    📡 Server time (UTC): {new Date(scheduleDate).toISOString().slice(0, 19).replace('T', ' ')}
-                  </p>
+                  <div className="mt-2 p-2 bg-muted/50 rounded border border-border">
+                    <p className="text-xs text-muted-foreground">
+                      🇮🇳 Your time (IST): <span className="font-mono text-foreground">{new Date(scheduleDate).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      🌍 Server time (UTC): <span className="font-mono text-foreground">{new Date(scheduleDate).toISOString().slice(0, 19).replace('T', ' ')}</span>
+                    </p>
+                    <p className="text-xs text-primary mt-1">
+                      ✅ Notification will be sent at your IST time above
+                    </p>
+                  </div>
                 )}
               </div>
 
