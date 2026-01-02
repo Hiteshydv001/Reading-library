@@ -68,12 +68,16 @@ async def check_scheduled_readings():
             notification_1hr_sent = link.get("notification_1hr_sent", False)
             notification_now_sent = link.get("notification_now_sent", False)
             
-            title = link.get("title", "Untitled")
+            title = link.get("title", "Untitled")[:50]
             url = link.get("url", "")
             reading_time = link.get("reading_time", 0)
             
+            # DEBUG: Log each reading
+            logger.info(f"📖 '{title}' - Scheduled: {scheduled_time} UTC, Minutes until: {minutes_until:.1f}, 1hr_sent: {notification_1hr_sent}, now_sent: {notification_now_sent}")
+            
             # Send 1-hour before notification (between 55-65 minutes before)
             if 55 <= minutes_until <= 65 and not notification_1hr_sent:
+                logger.info(f"⏰ Sending 1-hour reminder for: {title}")
                 message = f"""
 ⏰ <b>Upcoming Reading Reminder!</b>
 
@@ -96,6 +100,7 @@ async def check_scheduled_readings():
             
             # Send notification at scheduled time (within 2 minutes)
             elif -2 <= minutes_until <= 2 and not notification_now_sent:
+                logger.info(f"🚨 Sending NOW reminder for: {title}")
                 message = f"""
 🚨 <b>Time to Read NOW!</b>
 
