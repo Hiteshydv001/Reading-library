@@ -212,7 +212,7 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
 @app.get("/api/links")
 async def get_links(
     skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
+    limit: int = Query(50, ge=1, le=1000),  # Increased max limit to 1000
     is_read: Optional[bool] = None,
     is_favorite: Optional[bool] = None,
     is_scheduled: Optional[bool] = None,
@@ -224,7 +224,7 @@ async def get_links(
     Get all links with filtering and pagination
     
     - **skip**: Number of items to skip (pagination)
-    - **limit**: Max items to return (max 100)
+    - **limit**: Max items to return (max 1000)
     - **is_read**: Filter by read status
     - **is_favorite**: Filter by favorite status
     - **is_scheduled**: Filter by scheduled status
