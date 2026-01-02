@@ -387,6 +387,22 @@ async def telegram_webhook(request: Request):
             logger.info("No text in message")
             return {"ok": True}
         
+        # Handle /chatid command - helps users get their chat ID for notifications
+        if text.strip().lower() in ['/chatid', '/my_id', '/id']:
+            try:
+                from telegram import Bot
+                if TELEGRAM_BOT_TOKEN:
+                    bot = Bot(token=TELEGRAM_BOT_TOKEN)
+                    await bot.send_message(
+                        chat_id=chat_id,
+                        text=f"📋 Your Chat ID: `{chat_id}`\n\nUse this in NOTIFICATION_CHAT_ID to receive reading reminders!",
+                        parse_mode="Markdown"
+                    )
+                    logger.info(f"Sent chat ID {chat_id} to user")
+            except Exception as e:
+                logger.error(f"Failed to send chat ID: {e}")
+            return {"ok": True}
+        
         logger.info(f"Processing message from {chat_type}: {text[:100]}...")
         
         # Regex to find URLs
