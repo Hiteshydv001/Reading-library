@@ -14,6 +14,7 @@ from scraper import process_url
 from dotenv import load_dotenv
 import logging
 import asyncio
+from scheduler import start_notification_scheduler
 
 load_dotenv()
 
@@ -119,6 +120,9 @@ async def lifespan(app: FastAPI):
                     {"$set": {"password": hashed_password}}
                 )
                 logger.info("Admin user password verified/updated")
+        
+        # Start notification scheduler for reading reminders
+        notification_task = start_notification_scheduler()
         
         logger.info("Application startup complete")
     except Exception as e:
