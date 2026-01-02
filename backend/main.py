@@ -14,7 +14,7 @@ from scraper import process_url
 from dotenv import load_dotenv
 import logging
 import asyncio
-from scheduler import start_notification_scheduler
+from email_notifier import send_daily_digest, is_email_configured
 
 load_dotenv()
 
@@ -121,27 +121,21 @@ async def lifespan(app: FastAPI):
                 )
                 logger.info("Admin user password verified/updated")
         
-        # Start notification scheduler for reading reminders
-        logger.info("Attempting to start notification scheduler...")
-        notification_task = start_notification_scheduler()
-        if notification_task:
-            logger.info("✅ Notification scheduler task created")
+        # Check email configuration (endpoints will be used instead of background task)
+        if is_email_configured():
+            logger.info("✅ Email notifier configured - use /api/email/send/daily endpoint")
         else:
-            logger.warning("⚠️ Notification scheduler not started - check env vars")
+            logger.warning("⚠️ Email credentials not set - email notifications disabled")
         
         logger.info("Application startup complete")
     except Exception as e:
         logger.warning(f"Database connection issue: {e}")
         logger.warning("App started but MongoDB may not be available")
-        notification_task = None
     
     yield  # Application runs here
     
     # Cleanup on shutdown
     logger.info("Shutting down application...")
-    if notification_task:
-        notification_task.cancel()
-        logger.info("Notification scheduler cancelled")
     
     logger.info("Shutting down application...")
     try:
@@ -457,6 +451,22 @@ async def telegram_webhook(request: Request):
         logger.error(f"Error processing Telegram webhook: {e}", exc_info=True)
         # Always return 200 to Telegram
         return {"ok": True, "error": str(e)}
+
+# --- Email Digest Endpoint (for external cron job) ---
+@app.post("/api/email/send/daily")
+async def send_daily_email():
+    """Send daily digest with all scheduled readings for today - Call once per day from cron-job.org"""
+    result = await send_daily_digest("Daily")
+    return result
+
+@app.get("/api/email/status")
+async def email_status():
+    """Check if email is configured"""
+    configured = is_email_configured()
+    return {
+        "configured": configured,
+        "message": "Email configured" if configured else "Email credentials not set"
+    }
 
 if __name__ == "__main__":
     import uvicorn

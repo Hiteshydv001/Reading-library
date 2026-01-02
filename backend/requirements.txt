@@ -14,3 +14,5 @@ bcrypt
 python-multipart
 gunicorn
 uvicorn[standard]
+aiosmtplib
+email-validator
