@@ -143,8 +143,13 @@ def start_notification_scheduler():
         logger.info("To enable notifications, add your Telegram chat ID to .env")
         return None
     
-    # Create background task
-    loop = asyncio.get_event_loop()
-    task = loop.create_task(notification_loop())
-    logger.info("Notification scheduler started")
-    return task
+    logger.info(f"Starting scheduler with CHAT_ID: {NOTIFICATION_CHAT_ID[:3]}...{NOTIFICATION_CHAT_ID[-3:]}")
+    
+    # Create background task - use asyncio.create_task for better compatibility
+    try:
+        task = asyncio.create_task(notification_loop())
+        logger.info("✅ Notification scheduler started successfully!")
+        return task
+    except Exception as e:
+        logger.error(f"Failed to start notification scheduler: {e}")
+        return None

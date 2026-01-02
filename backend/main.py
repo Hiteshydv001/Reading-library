@@ -122,7 +122,12 @@ async def lifespan(app: FastAPI):
                 logger.info("Admin user password verified/updated")
         
         # Start notification scheduler for reading reminders
+        logger.info("Attempting to start notification scheduler...")
         notification_task = start_notification_scheduler()
+        if notification_task:
+            logger.info("✅ Notification scheduler task created")
+        else:
+            logger.warning("⚠️ Notification scheduler not started - check env vars")
         
         logger.info("Application startup complete")
     except Exception as e:
@@ -387,21 +392,6 @@ async def telegram_webhook(request: Request):
             logger.info("No text in message")
             return {"ok": True}
         
-        # Handle /chatid command - helps users get their chat ID for notifications
-        if text.strip().lower() in ['/chatid', '/my_id', '/id']:
-            try:
-                from telegram import Bot
-                if TELEGRAM_BOT_TOKEN:
-                    bot = Bot(token=TELEGRAM_BOT_TOKEN)
-                    await bot.send_message(
-                        chat_id=chat_id,
-                        text=f"📋 Your Chat ID: `{chat_id}`\n\nUse this in NOTIFICATION_CHAT_ID to receive reading reminders!",
-                        parse_mode="Markdown"
-                    )
-                    logger.info(f"Sent chat ID {chat_id} to user")
-            except Exception as e:
-                logger.error(f"Failed to send chat ID: {e}")
-            return {"ok": True}
         
         logger.info(f"Processing message from {chat_type}: {text[:100]}...")
         
