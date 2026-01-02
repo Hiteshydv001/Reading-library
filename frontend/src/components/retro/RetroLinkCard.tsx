@@ -347,9 +347,53 @@ export const RetroLinkCard = ({
                 }
               </p>
 
+              {/* Quick Schedule Buttons */}
+              <div className="mb-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() + 2);
+                    setScheduleDate(now.toISOString().slice(0, 16));
+                  }}
+                  className="px-3 py-1.5 text-xs bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary/20 transition-colors"
+                >
+                  ⚡ In 2 min
+                </button>
+                <button
+                  onClick={() => {
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() + 5);
+                    setScheduleDate(now.toISOString().slice(0, 16));
+                  }}
+                  className="px-3 py-1.5 text-xs bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary/20 transition-colors"
+                >
+                  🕐 In 5 min
+                </button>
+                <button
+                  onClick={() => {
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() + 10);
+                    setScheduleDate(now.toISOString().slice(0, 16));
+                  }}
+                  className="px-3 py-1.5 text-xs bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary/20 transition-colors"
+                >
+                  🕐 In 10 min
+                </button>
+                <button
+                  onClick={() => {
+                    const now = new Date();
+                    now.setHours(now.getHours() + 1);
+                    setScheduleDate(now.toISOString().slice(0, 16));
+                  }}
+                  className="px-3 py-1.5 text-xs bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary/20 transition-colors"
+                >
+                  ⏰ In 1 hour
+                </button>
+              </div>
+
               <div className="mb-6">
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Reading Date & Time
+                  Reading Date & Time (Your Local Time)
                 </label>
                 <input
                   type="datetime-local"
@@ -357,6 +401,11 @@ export const RetroLinkCard = ({
                   onChange={(e) => setScheduleDate(e.target.value)}
                   className="w-full px-4 py-2.5 bg-background border-2 border-input rounded-lg text-foreground focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
                 />
+                {scheduleDate && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    📡 Server time (UTC): {new Date(scheduleDate).toISOString().slice(0, 19).replace('T', ' ')}
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-3">
