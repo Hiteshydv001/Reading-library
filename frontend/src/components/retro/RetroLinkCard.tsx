@@ -3,7 +3,7 @@ import {
   Star, Trash2, ExternalLink, BookOpen, Clock, Link2, 
   X, Play, Calendar, CheckCircle2, AlertTriangle 
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Link } from "@/types";
 
 interface RetroLinkCardProps {
@@ -27,6 +27,20 @@ export const RetroLinkCard = ({
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
+
+  // Load existing scheduled time when opening modal
+  useEffect(() => {
+    if (showScheduleModal && link.scheduled_at) {
+      // Convert UTC time to local datetime-local format
+      const date = new Date(link.scheduled_at);
+      const localDateTime = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16);
+      setScheduleDate(localDateTime);
+    } else if (!showScheduleModal) {
+      setScheduleDate('');
+    }
+  }, [showScheduleModal, link.scheduled_at]);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const formatDate = (dateString: string) => {
@@ -45,7 +59,9 @@ export const RetroLinkCard = ({
   };
 
   const handleSchedule = () => {
-    onSchedule(link.id, scheduleDate || null);
+    // Convert local datetime-local format to UTC ISO string
+    const utcDateTime = scheduleDate ? new Date(scheduleDate).toISOString() : null;
+    onSchedule(link.id, utcDateTime);
     setShowScheduleModal(false);
   };
 
@@ -321,9 +337,14 @@ export const RetroLinkCard = ({
                 </button>
               </div>
               
-              <h3 className="text-xl font-serif font-bold text-foreground mb-2">Schedule Reading</h3>
+              <h3 className="text-xl font-serif font-bold text-foreground mb-2">
+                {link.scheduled_at ? 'Reschedule Reading' : 'Schedule Reading'}
+              </h3>
               <p className="text-muted-foreground mb-6 text-sm">
-                Set a date and time to read <span className="font-semibold text-foreground">"{link.title}"</span>.
+                {link.scheduled_at 
+                  ? `Change the reading time for "${link.title}".`
+                  : `Set a date and time to read "${link.title}".`
+                }
               </p>
 
               <div className="mb-6">
@@ -348,16 +369,17 @@ export const RetroLinkCard = ({
                   }}
                   className="flex-1 px-4 py-2.5 bg-muted text-muted-foreground font-medium rounded-lg border-2 border-border hover:bg-muted/80 transition-colors"
                 >
-                  Clear
+                  {link.scheduled_at ? 'Unschedule' : 'Clear'}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleSchedule}
-                  className="flex-1 px-4 py-2.5 bg-accent text-accent-foreground font-medium rounded-lg border-2 border-accent shadow-retro flex items-center justify-center gap-2 hover:shadow-glow transition-all"
+                  disabled={!scheduleDate}
+                  className="flex-1 px-4 py-2.5 bg-accent text-accent-foreground font-medium rounded-lg border-2 border-accent shadow-retro flex items-center justify-center gap-2 hover:shadow-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CheckCircle2 className="w-5 h-5" />
-                  Save
+                  {link.scheduled_at ? 'Update' : 'Save'}
                 </motion.button>
               </div>
             </motion.div>
