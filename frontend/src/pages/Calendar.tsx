@@ -23,6 +23,8 @@ const CalendarPage = () => {
       setLoading(true);
       try {
         const res = await (await import("@/lib/api")).getLinks({ is_scheduled: true, limit: 1000 });
+        console.log("📅 Calendar - Fetched scheduled links:", res.links?.length || 0);
+        console.log("📅 Links with scheduled_at:", res.links?.filter(l => l.scheduled_at).length || 0);
         setLinks(res.links || []);
       } catch (err: any) {
         console.error("Failed to load scheduled links", err);
