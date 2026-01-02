@@ -452,11 +452,23 @@ async def telegram_webhook(request: Request):
         # Always return 200 to Telegram
         return {"ok": True, "error": str(e)}
 
-# --- Email Digest Endpoint (for external cron job) ---
-@app.post("/api/email/send/daily")
-async def send_daily_email():
-    """Send daily digest with all scheduled readings for today - Call once per day from cron-job.org"""
-    result = await send_daily_digest("Daily")
+# --- Email Digest Endpoints (for external cron jobs) ---
+@app.post("/api/email/send/morning")
+async def send_morning_email():
+    """Send morning digest (5 AM IST) - Call from cron-job.org at 5 AM IST"""
+    result = await send_daily_digest("Morning")
+    return result
+
+@app.post("/api/email/send/noon")
+async def send_noon_email():
+    """Send noon digest (12 PM IST) - Call from cron-job.org at 12 PM IST"""
+    result = await send_daily_digest("Noon")
+    return result
+
+@app.post("/api/email/send/evening")
+async def send_evening_email():
+    """Send evening digest (5 PM IST) - Call from cron-job.org at 5 PM IST"""
+    result = await send_daily_digest("Evening")
     return result
 
 @app.get("/api/email/status")

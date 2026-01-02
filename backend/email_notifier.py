@@ -86,6 +86,15 @@ def create_reading_digest_html(readings: list, time_of_day: str):
     """Create HTML email body for reading digest"""
     ist_now = get_ist_time()
     
+    # Emoji based on time of day
+    emoji_map = {
+        "Morning": "🌅",
+        "Noon": "☀️",
+        "Evening": "🌆",
+        "Daily": "📚"
+    }
+    emoji = emoji_map.get(time_of_day, "📚")
+    
     html = f"""
     <html>
     <head>
@@ -105,7 +114,7 @@ def create_reading_digest_html(readings: list, time_of_day: str):
     </head>
     <body>
         <div class="header">
-            <h1>📚 Your Reading Schedule for Today</h1>
+            <h1>{emoji} Your {time_of_day} Reading Schedule</h1>
             <p>{ist_now.strftime("%A, %B %d, %Y")}</p>
         </div>
         
@@ -141,8 +150,17 @@ def create_reading_digest_text(readings: list, time_of_day: str):
     """Create plain text email body for reading digest"""
     ist_now = get_ist_time()
     
+    # Emoji based on time of day
+    emoji_map = {
+        "Morning": "🌅",
+        "Noon": "☀️",
+        "Evening": "🌆",
+        "Daily": "📚"
+    }
+    emoji = emoji_map.get(time_of_day, "📚")
+    
     text = f"""
-📚 Your Reading Schedule for Today
+{emoji} Your {time_of_day} Reading Schedule
 {ist_now.strftime("%A, %B %d, %Y")}
 {'=' * 50}
 
@@ -185,7 +203,10 @@ async def send_daily_digest(time_of_day: str):
             return {"status": "success", "message": "No readings scheduled", "count": 0}
         
         ist_now = get_ist_time()
-        subject = f"📚 Today's Reading Plan - {len(readings)} Articles ({ist_now.strftime('%b %d, %Y')})"
+        # Time-specific emoji for subject
+        emoji_map = {"Morning": "🌅", "Noon": "☀️", "Evening": "🌆", "Daily": "📚"}
+        emoji = emoji_map.get(time_of_day, "📚")
+        subject = f"{emoji} {time_of_day} Reading Digest - {len(readings)} Articles ({ist_now.strftime('%b %d, %Y')})"
         
         text_body = create_reading_digest_text(readings, time_of_day)
         html_body = create_reading_digest_html(readings, time_of_day)
